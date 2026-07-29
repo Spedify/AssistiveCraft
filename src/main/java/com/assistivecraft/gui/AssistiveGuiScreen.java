@@ -7,137 +7,67 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
 
 public class AssistiveGuiScreen extends Screen {
-
     public AssistiveGuiScreen() {
-        super(Text.literal("AssistiveCraft Settings"));
+        super(Text.literal("AssistiveCraft Configuration"));
     }
 
     @Override
     protected void init() {
-        ModuleManager mm = ModuleManager.INSTANCE;
-        int startX = this.width / 2 - 100;
-        int currentY = 30;
+        int startY = 40;
+        int btnWidth = 150;
+        int btnHeight = 20;
+        int col1 = this.width / 2 - 160;
+        int col2 = this.width / 2 + 10;
 
-        // ==================== COMBAT CATEGORY ====================
-        this.addDrawableChild(ButtonWidget.builder(
-            Text.literal((mm.combatCategoryExpanded ? "▼ " : "► ") + "Combat Assist"),
-            btn -> {
-                mm.combatCategoryExpanded = !mm.combatCategoryExpanded;
-                this.clearAndInit();
-            }
-        ).dimensions(startX, currentY, 200, 20).build());
-        currentY += 24;
+        this.addDrawableChild(ButtonWidget.builder(getToggleText("Combat Alerts", ModuleManager.combatAlerts), btn -> {
+            ModuleManager.combatAlerts = !ModuleManager.combatAlerts;
+            btn.setMessage(getToggleText("Combat Alerts", ModuleManager.combatAlerts));
+        }).dimensions(col1, startY, btnWidth, btnHeight).build());
 
-        if (mm.combatCategoryExpanded) {
-            // Individual Toggle: Aim / Crosshair Assist
-            this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Aim Assist: " + (mm.crosshairAssistEnabled ? "ON" : "OFF")),
-                btn -> {
-                    mm.crosshairAssistEnabled = !mm.crosshairAssistEnabled;
-                    btn.setMessage(Text.literal("Aim Assist: " + (mm.crosshairAssistEnabled ? "ON" : "OFF")));
-                }
-            ).dimensions(startX + 10, currentY, 180, 20).build());
-            currentY += 22;
+        this.addDrawableChild(ButtonWidget.builder(getToggleText("Totem Alert & Macro", ModuleManager.totemAlert), btn -> {
+            ModuleManager.totemAlert = !ModuleManager.totemAlert;
+            btn.setMessage(getToggleText("Totem Alert & Macro", ModuleManager.totemAlert));
+        }).dimensions(col1, startY + 25, btnWidth, btnHeight).build());
 
-            // Individual Toggle: Auto Attack Sync
-            this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Attack Sync: " + (mm.attackSyncEnabled ? "ON" : "OFF")),
-                btn -> {
-                    mm.attackSyncEnabled = !mm.attackSyncEnabled;
-                    btn.setMessage(Text.literal("Attack Sync: " + (mm.attackSyncEnabled ? "ON" : "OFF")));
-                }
-            ).dimensions(startX + 10, currentY, 180, 20).build());
-            currentY += 22;
+        this.addDrawableChild(ButtonWidget.builder(getToggleText("Auto-Eat Shortcut", ModuleManager.eatShortcut), btn -> {
+            ModuleManager.eatShortcut = !ModuleManager.eatShortcut;
+            btn.setMessage(getToggleText("Auto-Eat Shortcut", ModuleManager.eatShortcut));
+        }).dimensions(col1, startY + 50, btnWidth, btnHeight).build());
 
-            // Individual Toggle: Auto Totem Swap
-            this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Auto Totem: " + (mm.totemSwapEnabled ? "ON" : "OFF")),
-                btn -> {
-                    mm.totemSwapEnabled = !mm.totemSwapEnabled;
-                    btn.setMessage(Text.literal("Auto Totem: " + (mm.totemSwapEnabled ? "ON" : "OFF")));
-                }
-            ).dimensions(startX + 10, currentY, 180, 20).build());
-            currentY += 26;
-        }
+        this.addDrawableChild(ButtonWidget.builder(getToggleText("Fall Warning", ModuleManager.fallWarning), btn -> {
+            ModuleManager.fallWarning = !ModuleManager.fallWarning;
+            btn.setMessage(getToggleText("Fall Warning", ModuleManager.fallWarning));
+        }).dimensions(col1, startY + 75, btnWidth, btnHeight).build());
 
-        // ==================== OUTLINES CATEGORY ====================
-        this.addDrawableChild(ButtonWidget.builder(
-            Text.literal((mm.outlinesCategoryExpanded ? "▼ " : "► ") + "Visual & Outlines"),
-            btn -> {
-                mm.outlinesCategoryExpanded = !mm.outlinesCategoryExpanded;
-                this.clearAndInit();
-            }
-        ).dimensions(startX, currentY, 200, 20).build());
-        currentY += 24;
+        this.addDrawableChild(ButtonWidget.builder(getToggleText("GUI Movement", ModuleManager.guiMovement), btn -> {
+            ModuleManager.guiMovement = !ModuleManager.guiMovement;
+            btn.setMessage(getToggleText("GUI Movement", ModuleManager.guiMovement));
+        }).dimensions(col2, startY, btnWidth, btnHeight).build());
 
-        if (mm.outlinesCategoryExpanded) {
-            // Individual Toggle: Mob Outline
-            this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Mob Outlines: " + (mm.entityOutlinesEnabled ? "ON" : "OFF")),
-                btn -> {
-                    mm.entityOutlinesEnabled = !mm.entityOutlinesEnabled;
-                    btn.setMessage(Text.literal("Mob Outlines: " + (mm.entityOutlinesEnabled ? "ON" : "OFF")));
-                }
-            ).dimensions(startX + 10, currentY, 180, 20).build());
-            currentY += 22;
+        this.addDrawableChild(ButtonWidget.builder(getToggleText("Entity Indicators", ModuleManager.entityIndicators), btn -> {
+            ModuleManager.entityIndicators = !ModuleManager.entityIndicators;
+            btn.setMessage(getToggleText("Entity Indicators", ModuleManager.entityIndicators));
+        }).dimensions(col2, startY + 25, btnWidth, btnHeight).build());
 
-            // Individual Toggle: Diamond ESP
-            this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Diamond ESP: " + (mm.oreOutlinesEnabled ? "ON" : "OFF")),
-                btn -> {
-                    mm.oreOutlinesEnabled = !mm.oreOutlinesEnabled;
-                    btn.setMessage(Text.literal("Diamond ESP: " + (mm.oreOutlinesEnabled ? "ON" : "OFF")));
-                }
-            ).dimensions(startX + 10, currentY, 180, 20).build());
-            currentY += 22;
+        this.addDrawableChild(ButtonWidget.builder(getToggleText("Ore Highlights", ModuleManager.oreHighlights), btn -> {
+            ModuleManager.oreHighlights = !ModuleManager.oreHighlights;
+            btn.setMessage(getToggleText("Ore Highlights", ModuleManager.oreHighlights));
+        }).dimensions(col2, startY + 50, btnWidth, btnHeight).build());
 
-            // Individual Toggle: Trajectory / Projectile Path
-            this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Projectile Path: " + (mm.projectilePathEnabled ? "ON" : "OFF")),
-                btn -> {
-                    mm.projectilePathEnabled = !mm.projectilePathEnabled;
-                    btn.setMessage(Text.literal("Projectile Path: " + (mm.projectilePathEnabled ? "ON" : "OFF")));
-                }
-            ).dimensions(startX + 10, currentY, 180, 20).build());
-            currentY += 26;
-        }
+        this.addDrawableChild(ButtonWidget.builder(getToggleText("Projectile Path", ModuleManager.projectilePath), btn -> {
+            ModuleManager.projectilePath = !ModuleManager.projectilePath;
+            btn.setMessage(getToggleText("Projectile Path", ModuleManager.projectilePath));
+        }).dimensions(col2, startY + 75, btnWidth, btnHeight).build());
+    }
 
-        // ==================== UTILITY CATEGORY ====================
-        this.addDrawableChild(ButtonWidget.builder(
-            Text.literal((mm.utilityCategoryExpanded ? "▼ " : "► ") + "Utilities"),
-            btn -> {
-                mm.utilityCategoryExpanded = !mm.utilityCategoryExpanded;
-                this.clearAndInit();
-            }
-        ).dimensions(startX, currentY, 200, 20).build());
-        currentY += 24;
-
-        if (mm.utilityCategoryExpanded) {
-            // Individual Toggle: Auto Eat
-            this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Auto Eat: " + (mm.autoEatEnabled ? "ON" : "OFF")),
-                btn -> {
-                    mm.autoEatEnabled = !mm.autoEatEnabled;
-                    btn.setMessage(Text.literal("Auto Eat: " + (mm.autoEatEnabled ? "ON" : "OFF")));
-                }
-            ).dimensions(startX + 10, currentY, 180, 20).build());
-            currentY += 22;
-
-            // Individual Toggle: Fall Mitigation
-            this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Fall Assist: " + (mm.fallMitigationEnabled ? "ON" : "OFF")),
-                btn -> {
-                    mm.fallMitigationEnabled = !mm.fallMitigationEnabled;
-                    btn.setMessage(Text.literal("Fall Assist: " + (mm.fallMitigationEnabled ? "ON" : "OFF")));
-                }
-            ).dimensions(startX + 10, currentY, 180, 20).build());
-            currentY += 26;
-        }
+    private Text getToggleText(String name, boolean state) {
+        return Text.literal(name + ": " + (state ? "§aON" : "§cOFF"));
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context);
+        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 20, 0xFFFFFF);
         super.render(context, mouseX, mouseY, delta);
     }
 }
