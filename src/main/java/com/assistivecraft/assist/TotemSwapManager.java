@@ -20,13 +20,28 @@ public class TotemSwapManager {
             if (client.player.getOffHandStack().getItem() != Items.TOTEM_OF_UNDYING) {
                 int width = client.getWindow().getScaledWidth();
                 int height = client.getWindow().getScaledHeight();
-                context.drawCenteredTextWithShadow(client.textRenderer, Text.literal("§cNO TOTEM IN OFFHAND"), width / 2, height - 60, 0xFF0000);
+                context.drawCenteredTextWithShadow(client.textRenderer, Text.literal("§cAUTO-TOTEM ACTIVE"), width / 2, height - 60, 0xFF0000);
             }
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (!ModuleManager.totemAlert || client.player == null) return;
+            if (!ModuleManager.totemAlert || client.player == null || client.interactionManager == null) return;
 
+            // Automatically check if offhand is empty or not a totem, and swap instantly
+            if (client.player.getOffHandStack().getItem() != Items.TOTEM_OF_UNDYING) {
+                PlayerInventory inv = client.player.getInventory();
+                for (int i = 0; i < 36; i++) {
+                    if (inv.getStack(i).getItem() == Items.TOTEM_OF_UNDYING) {
+                        int syncId = client.player.playerScreenHandler.syncId;
+                        int slotId = i < 9 ? i + 36 : i;
+                        
+                        client.interactionManager.clickSlot(syncId, slotId, 40, SlotActionType.SWAP, client.player);
+                        break;
+                    }
+                }
+            }
+
+            // Manual hotkey support as a fallback backup
             while (KeyBindings.totemKey.wasPressed()) {
                 PlayerInventory inv = client.player.getInventory();
                 if (client.player.getOffHandStack().getItem() == Items.TOTEM_OF_UNDYING) return;
