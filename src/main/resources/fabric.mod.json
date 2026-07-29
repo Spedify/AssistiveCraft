@@ -1,14 +1,13 @@
 {
   "schemaVersion": 1,
   "id": "assistivecraft",
-  "version": "1.0.0",
+  "version": "${version}",
   "name": "AssistiveCraft",
-  "description": "Accessibility and visual utility mod for Minecraft 1.20.1",
-  "authors": [
-    "Player"
-  ],
+  "description": "An accessibility mod offering HUD aids and confirmation-driven shortcuts.",
+  "authors": ["AssistiveCraft Team"],
   "contact": {},
   "license": "MIT",
+  "icon": "assets/assistivecraft/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [
