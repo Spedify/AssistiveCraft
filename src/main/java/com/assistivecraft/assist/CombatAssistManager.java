@@ -11,16 +11,26 @@ import net.minecraft.text.Text;
 import java.util.Random;
 
 public class CombatAssistManager {
-    private static final float SMOOTHNESS_FACTOR = 0.22f; // Lower = more human mouse smoothing
+    private static final float SMOOTHNESS_FACTOR = 0.22f;
     private static final Random RANDOM = new Random();
     private static int clickHoldTicks = 0;
 
     public static void initialize() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (!ModuleManager.combatAlerts || client.player == null || client.world == null) {
+            // FIX: If left mouse button is physically held down by the user, release our override so they can break blocks!
+            if (client != null && client.mouse.isCursorLocked() && client.options.attackKey.isPressed() && !ModuleManager.combatAlerts) {
+                return;
+            }
+
+            if (!ModuleManager.combatAlerts || client == null || client.player == null || client.world == null) {
                 if (client != null && client.options != null) {
                     client.options.attackKey.setPressed(false);
                 }
+                return;
+            }
+
+            // FIX: Do NOT override attack input if the user is holding down left-click to mine/break a block
+            if (client.options.attackKey.isPressed() && client.crosshairTarget != null && client.crosshairTarget.getType() == net.minecraft.util.hit.HitResult.Type.BLOCK) {
                 return;
             }
 
@@ -32,14 +42,13 @@ public class CombatAssistManager {
                 if (((PlayerEntity) entity).isSpectator() || ((PlayerEntity) entity).isCreative()) continue;
 
                 double dist = client.player.squaredDistanceTo(entity);
-                if (dist < 25.0 && dist < closestDistance) { // Within 5 blocks reach
+                if (dist < 25.0 && dist < closestDistance) {
                     closestDistance = dist;
                     closestTarget = (PlayerEntity) entity;
                 }
             }
 
             if (closestTarget != null) {
-                // Smooth human-like aim tracking calculation
                 double dx = closestTarget.getX() - client.player.getX();
                 double dy = (closestTarget.getY() + closestTarget.getEyeHeight(closestTarget.getPose())) - client.player.getEyeY();
                 double dz = closestTarget.getZ() - client.player.getZ();
@@ -54,14 +63,13 @@ public class CombatAssistManager {
                 float yawDiff = wrapDegrees(targetYaw - currentYaw);
                 float pitchDiff = targetPitch - currentPitch;
 
-                // Gradually glide view angles instead of instantly snapping
                 client.player.setYaw(currentYaw + (yawDiff * SMOOTHNESS_FACTOR));
                 client.player.setPitch(currentPitch + (pitchDiff * SMOOTHNESS_FACTOR));
 
-                // Simulate true physical mouse click input via keybinding state
-                if (client.player.getAttackCooldownProgress(0.5f) >= 0.95f) {
+                // FIX: Strictly wait for attack cooldown progress to reach 100% (1.0f) before initiating physical click input
+                if (client.player.getAttackCooldownProgress(0.0f) >= 1.0f) {
                     client.options.attackKey.setPressed(true);
-                    clickHoldTicks = 1 + RANDOM.nextInt(2); // Hold click for 1-2 ticks like a real click
+                    clickHoldTicks = 1 + RANDOM.nextInt(2);
                 } else if (clickHoldTicks > 0) {
                     clickHoldTicks--;
                     if (clickHoldTicks == 0) {
@@ -80,7 +88,7 @@ public class CombatAssistManager {
 
             int width = client.getWindow().getScaledWidth();
             int height = client.getWindow().getScaledHeight();
-            context.drawCenteredTextWithShadow(client.textRenderer, Text.literal("§aSMOOTH AIM-ASSIST ACTIVE"), width / 2, height - 70, 0x00FF00);
+            context.drawCenteredTextWithShadow(client.textRenderer, Text.literal("§aCOOLDOWN-SYNCED AIM ACTIVE"), width / 2, height - 70, 0x00FF00);
         });
     }
 
