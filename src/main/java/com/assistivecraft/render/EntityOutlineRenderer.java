@@ -4,12 +4,9 @@ import com.assistivecraft.ModuleManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.client.render.*;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 
@@ -26,13 +23,13 @@ public class EntityOutlineRenderer {
 
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
-            RenderSystem.disableDepthTest(); // Renders through walls
+            RenderSystem.disableDepthTest(); // True wall-hack behavior
 
             VertexConsumer consumer = context.consumers().getBuffer(RenderLayer.getLines());
 
             for (Entity entity : client.world.getEntities()) {
-                if (entity == client.player || !(entity instanceof LivingEntity)) continue;
-                if (entity.squaredDistanceTo(client.player) > 4096) continue; // 64 blocks range
+                if (entity == client.player || !(entity instanceof PlayerEntity)) continue;
+                if (entity.squaredDistanceTo(client.player) > 4096) continue;
 
                 Box box = entity.getBoundingBox().offset(-camPos.x, -camPos.y, -camPos.z);
                 WorldRenderer.drawBox(context.matrixStack(), consumer, box, 1.0f, 0.0f, 0.0f, 1.0f);
