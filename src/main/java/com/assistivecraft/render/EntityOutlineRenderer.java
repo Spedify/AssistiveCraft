@@ -23,13 +23,14 @@ public class EntityOutlineRenderer {
 
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
-            RenderSystem.disableDepthTest(); // True wall-hack behavior
+            // FIX: Force clear depth and disable depth test to guarantee rendering directly through blocks/walls
+            RenderSystem.disableDepthTest();
 
             VertexConsumer consumer = context.consumers().getBuffer(RenderLayer.getLines());
 
             for (Entity entity : client.world.getEntities()) {
                 if (entity == client.player || !(entity instanceof PlayerEntity)) continue;
-                if (entity.squaredDistanceTo(client.player) > 4096) continue;
+                if (entity.squaredDistanceTo(client.player) > 16384) continue;
 
                 Box box = entity.getBoundingBox().offset(-camPos.x, -camPos.y, -camPos.z);
                 WorldRenderer.drawBox(context.matrixStack(), consumer, box, 1.0f, 0.0f, 0.0f, 1.0f);
