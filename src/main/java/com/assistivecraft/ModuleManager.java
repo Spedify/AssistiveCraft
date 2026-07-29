@@ -1,34 +1,16 @@
 package com.assistivecraft;
 
 public class ModuleManager {
-    public static final ModuleManager INSTANCE = new ModuleManager();
+    public static boolean combatAlerts = true;
+    public static boolean totemAlert = true;
+    public static boolean eatShortcut = true;
+    public static boolean fallWarning = true;
+    public static boolean guiMovement = true;
+    public static boolean entityIndicators = true;
+    public static boolean oreHighlights = true;
+    public static boolean projectilePath = true;
 
-    // --- CATEGORY DROPDOWN EXPANSION STATES ---
-    public boolean combatCategoryExpanded = true;
-    public boolean outlinesCategoryExpanded = true;
-    public boolean utilityCategoryExpanded = true;
-
-    // --- COMBAT INDIVIDUAL TOGGLES & SETTINGS ---
-    public boolean crosshairAssistEnabled = false;
-    public float crosshairAssistSpeed = 0.15f;
-    public float crosshairAssistFovDegrees = 60.0f;
-    
-    public boolean attackSyncEnabled = false;
-    public double interactionDistance = 4.5;
-    
-    public boolean totemSwapEnabled = false;
-
-    // --- OUTLINES INDIVIDUAL TOGGLES & SETTINGS ---
-    public boolean entityOutlinesEnabled = false;
-    
-    public boolean oreOutlinesEnabled = false;
-    public int oreOutlineRadius = 16;
-    
-    public boolean projectilePathEnabled = false;
-
-    // --- UTILITY INDIVIDUAL TOGGLES & SETTINGS ---
-    public boolean autoEatEnabled = false;
-    public int autoEatHungerThreshold = 14;
-    
-    public boolean fallMitigationEnabled = false;
+    public static float alertVolume = 1.0f;
+    public static float fallThreshold = 3.0f;
+    public static int hungerThreshold = 6;
 }
