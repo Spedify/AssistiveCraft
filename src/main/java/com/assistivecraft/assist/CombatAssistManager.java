@@ -11,25 +11,19 @@ import net.minecraft.text.Text;
 import java.util.Random;
 
 public class CombatAssistManager {
-    private static final float SMOOTHNESS_FACTOR = 0.22f;
+    private static final float SMOOTHNESS_FACTOR = 0.25f;
     private static final Random RANDOM = new Random();
     private static int clickHoldTicks = 0;
 
     public static void initialize() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            // FIX: If left mouse button is physically held down by the user, release our override so they can break blocks!
-            if (client != null && client.mouse.isCursorLocked() && client.options.attackKey.isPressed() && !ModuleManager.combatAlerts) {
+            // Restore native user control over attack key if module is off or user is breaking blocks
+            if (client == null || client.player == null || client.world == null) return;
+
+            if (!ModuleManager.combatAlerts) {
                 return;
             }
 
-            if (!ModuleManager.combatAlerts || client == null || client.player == null || client.world == null) {
-                if (client != null && client.options != null) {
-                    client.options.attackKey.setPressed(false);
-                }
-                return;
-            }
-
-            // FIX: Do NOT override attack input if the user is holding down left-click to mine/break a block
             if (client.options.attackKey.isPressed() && client.crosshairTarget != null && client.crosshairTarget.getType() == net.minecraft.util.hit.HitResult.Type.BLOCK) {
                 return;
             }
@@ -42,13 +36,15 @@ public class CombatAssistManager {
                 if (((PlayerEntity) entity).isSpectator() || ((PlayerEntity) entity).isCreative()) continue;
 
                 double dist = client.player.squaredDistanceTo(entity);
-                if (dist < 25.0 && dist < closestDistance) {
+                // Strict reach validation (default weapon reach range check: ~3.0 to 4.0 blocks squared = ~16.0)
+                if (dist <= 16.0 && dist < closestDistance) {
                     closestDistance = dist;
                     closestTarget = (PlayerEntity) entity;
                 }
             }
 
             if (closestTarget != null) {
+                // Smooth tracking view adjustment
                 double dx = closestTarget.getX() - client.player.getX();
                 double dy = (closestTarget.getY() + closestTarget.getEyeHeight(closestTarget.getPose())) - client.player.getEyeY();
                 double dz = closestTarget.getZ() - client.player.getZ();
@@ -66,7 +62,7 @@ public class CombatAssistManager {
                 client.player.setYaw(currentYaw + (yawDiff * SMOOTHNESS_FACTOR));
                 client.player.setPitch(currentPitch + (pitchDiff * SMOOTHNESS_FACTOR));
 
-                // FIX: Strictly wait for attack cooldown progress to reach 100% (1.0f) before initiating physical click input
+                // STRICT VANILLA CHECK: getAttackCooldownProgress(0.0f) ensures vanilla cooldown bar is 100% full (1.0)
                 if (client.player.getAttackCooldownProgress(0.0f) >= 1.0f) {
                     client.options.attackKey.setPressed(true);
                     clickHoldTicks = 1 + RANDOM.nextInt(2);
@@ -88,7 +84,7 @@ public class CombatAssistManager {
 
             int width = client.getWindow().getScaledWidth();
             int height = client.getWindow().getScaledHeight();
-            context.drawCenteredTextWithShadow(client.textRenderer, Text.literal("§aCOOLDOWN-SYNCED AIM ACTIVE"), width / 2, height - 70, 0x00FF00);
+            context.drawCenteredTextWithShadow(client.textRenderer, Text.literal("§aSTRICT COOLDOWN AIM-ASSIST ACTIVE"), width / 2, height - 70, 0x00FF00);
         });
     }
 
