@@ -1,28 +1,29 @@
 package com.assistivecraft.assist;
 
+import com.assistivecraft.ModuleManager;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.item.Items;
-import net.minecraft.util.Hand;
+import net.minecraft.text.Text;
 
 public class FallMitigationManager {
-    public static void tick(MinecraftClient client) {
-        if (client.player == null || client.world == null) return;
+    public static void initialize() {
+        HudRenderCallback.EVENT.register((context, tickDelta) -> {
+            if (!ModuleManager.fallWarning) return;
 
-        if (client.player.fallDistance > 3.0f && !client.player.isOnGround()) {
-            for (int i = 0; i < 9; i++) {
-                if (client.player.getInventory().getStack(i).isOf(Items.WATER_BUCKET)) {
-                    client.player.getInventory().selectedSlot = i;
-                    if (client.player.getPitch() < 85.0f) {
-                        client.player.setPitch(90.0f);
-                    }
-                    if (client.player.fallDistance > 4.5f) {
-                        if (client.interactionManager != null) {
-                            client.interactionManager.interactItem(client.player, Hand.MAIN_HAND);
-                        }
-                    }
-                    break;
-                }
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client.player == null) return;
+
+            if (client.player.fallDistance > ModuleManager.fallThreshold) {
+                int width = client.getWindow().getScaledWidth();
+                int height = client.getWindow().getScaledHeight();
+                
+                context.fill(0, 0, width, 10, 0x88FF0000);
+                context.fill(0, height - 10, width, height, 0x88FF0000);
+                context.fill(0, 0, 10, height, 0x88FF0000);
+                context.fill(width - 10, 0, width, height, 0x88FF0000);
+                
+                context.drawCenteredTextWithShadow(client.textRenderer, Text.literal("§cWARNING: LETHAL FALL VELOCITY"), width / 2, height / 4, 0xFF0000);
             }
-        }
+        });
     }
 }
