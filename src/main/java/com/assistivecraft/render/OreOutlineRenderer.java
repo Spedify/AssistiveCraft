@@ -2,55 +2,65 @@ package com.assistivecraft.render;
 
 import com.assistivecraft.ModuleManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 
 public class OreOutlineRenderer {
+    public static void initialize() {
+        WorldRenderEvents.LAST.register(context -> {
+            if (!ModuleManager.oreHighlights) return;
 
-    public static void onWorldRenderLast(WorldRenderContext context) {
-        ModuleManager mm = ModuleManager.INSTANCE;
-        if (!mm.oreOutlinesEnabled) return;
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client.player == null || client.world == null) return;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null || client.player == null) return;
+            Camera camera = context.camera();
+            Vec3d camPos = camera.getPos();
+            BlockPos playerPos = client.player.getBlockPos();
 
-        MatrixStack matrices = context.matrixStack();
-        if (matrices == null) return;
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.disableDepthTest();
 
-        Vec3d cameraPos = context.camera().getPos();
-        int radius = mm.oreOutlineRadius;
-        BlockPos center = client.player.getBlockPos();
+            VertexConsumer consumer = context.consumers().getBuffer(RenderLayer.getLines());
 
-        VertexConsumerProvider.Immediate immediate = client.getBufferBuilders().getEntityVertexConsumers();
-        RenderSystem.disableDepthTest();
-        VertexConsumer buffer = immediate.getBuffer(RenderLayer.getLines());
+            int radius = 12;
+            for (int x = -radius; x <= radius; x++) {
+                for (int y = -radius; y <= radius; y++) {
+                    for (int z = -radius; z <= radius; z++) {
+                        BlockPos pos = playerPos.add(x, y, z);
+                        BlockState state = client.world.getBlockState(pos);
 
-        BlockPos.Mutable pos = new BlockPos.Mutable();
-        for (int x = -radius; x <= radius; x++) {
-            for (int y = -radius; y <= radius; y++) {
-                for (int z = -radius; z <= radius; z++) {
-                    pos.set(center.getX() + x, center.getY() + y, center.getZ() + z);
-                    var state = client.world.getBlockState(pos);
-                    if (state.isOf(Blocks.DIAMOND_ORE) || state.isOf(Blocks.DEEPSLATE_DIAMOND_ORE)) {
-                        Box box = new Box(pos).offset(-cameraPos.x, -cameraPos.y, -cameraPos.z);
-                        WorldRenderer.drawBox(matrices, buffer,
-                                box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ,
-                                0.2f, 0.8f, 1.0f, 1.0f);
+                        if (state.isOf(Blocks.DIAMOND_ORE) || state.isOf(Blocks.DEEPSLATE_DIAMOND_ORE)) {
+                            if (isExposed(client, pos)) {
+                                Box box = new Box(pos).offset(-camPos.x, -camPos.y, -camPos.z);
+                                WorldRenderer.drawBox(context.matrixStack(), consumer, box, 0.0f, 1.0f, 1.0f, 1.0f);
+                            }
+                        }
                     }
                 }
             }
-        }
 
-        immediate.draw();
-        RenderSystem.enableDepthTest();
+            RenderSystem.enableDepthTest();
+            RenderSystem.disableBlend();
+        });
+    }
+
+    private static boolean isExposed(MinecraftClient client, BlockPos pos) {
+        for (Direction dir : Direction.values()) {
+            if (!client.world.getBlockState(pos.offset(dir)).isOpaqueFullCube(client.world, pos.offset(dir))) {
+                return true;
+            }
+        }
+        return false;
     }
 }
