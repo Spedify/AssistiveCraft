@@ -14,7 +14,7 @@ public class KeyBindings {
         openGuiKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.assistivecraft.opengui",
             InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_GRAVE, // Grave Accent (`) key
+            GLFW.GLFW_KEY_GRAVE_ACCENT, // Grave Accent (`) key
             "category.assistivecraft.general"
         ));
     }
