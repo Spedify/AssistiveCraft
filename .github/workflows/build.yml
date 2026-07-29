@@ -26,6 +26,8 @@ jobs:
         cache-disabled: true
 
     - name: Build Mod
+      env:
+        GRADLE_OPTS: "-Xmx4096m -XX:MaxMetaspaceSize=1024m"
       run: gradle build --no-daemon
 
     - name: Upload Mod Jar
