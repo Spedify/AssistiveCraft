@@ -25,7 +25,8 @@ public class OreOutlineRenderer {
 
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
-            RenderSystem.disableDepthTest(); // Forces rendering straight through terrain
+            // FIX: Force clear depth test to allow X-Ray ESP through solid blocks
+            RenderSystem.disableDepthTest();
 
             VertexConsumer consumer = context.consumers().getBuffer(RenderLayer.getLines());
 
@@ -37,7 +38,8 @@ public class OreOutlineRenderer {
                         BlockState state = client.world.getBlockState(pos);
 
                         if (state.isOf(Blocks.DIAMOND_ORE) || state.isOf(Blocks.DEEPSLATE_DIAMOND_ORE) ||
-                            state.isOf(Blocks.ANCIENT_DEBRIS) || state.isOf(Blocks.GOLD_ORE)) {
+                            state.isOf(Blocks.ANCIENT_DEBRIS) || state.isOf(Blocks.GOLD_ORE) ||
+                            state.isOf(Blocks.IRON_ORE) || state.isOf(Blocks.DEEPSLATE_IRON_ORE)) {
                             
                             Box box = new Box(pos).offset(-camPos.x, -camPos.y, -camPos.z);
                             WorldRenderer.drawBox(context.matrixStack(), consumer, box, 0.0f, 1.0f, 1.0f, 1.0f);
