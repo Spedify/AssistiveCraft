@@ -6,10 +6,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.client.render.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
@@ -28,11 +25,11 @@ public class OreOutlineRenderer {
 
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
-            RenderSystem.disableDepthTest(); // Renders through walls (X-Ray ESP)
+            RenderSystem.disableDepthTest(); // Forces rendering straight through terrain
 
             VertexConsumer consumer = context.consumers().getBuffer(RenderLayer.getLines());
 
-            int radius = 24; // Increased scan range
+            int radius = 24;
             for (int x = -radius; x <= radius; x++) {
                 for (int y = -radius; y <= radius; y++) {
                     for (int z = -radius; z <= radius; z++) {
