@@ -26,17 +26,16 @@ public class EntityOutlineRenderer {
 
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
-            RenderSystem.disableDepthTest();
+            RenderSystem.disableDepthTest(); // Renders through walls
 
             VertexConsumer consumer = context.consumers().getBuffer(RenderLayer.getLines());
 
             for (Entity entity : client.world.getEntities()) {
                 if (entity == client.player || !(entity instanceof LivingEntity)) continue;
-                if (entity.squaredDistanceTo(client.player) > 1024) continue;
-                if (!client.player.canSee(entity)) continue;
+                if (entity.squaredDistanceTo(client.player) > 4096) continue; // 64 blocks range
 
                 Box box = entity.getBoundingBox().offset(-camPos.x, -camPos.y, -camPos.z);
-                WorldRenderer.drawBox(context.matrixStack(), consumer, box, 1.0f, 0.5f, 0.0f, 1.0f);
+                WorldRenderer.drawBox(context.matrixStack(), consumer, box, 1.0f, 0.0f, 0.0f, 1.0f);
             }
 
             RenderSystem.enableDepthTest();
