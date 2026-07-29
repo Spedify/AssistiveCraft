@@ -6,6 +6,9 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.SwordItem;
+import net.minecraft.item.AxeItem;
 import net.minecraft.text.Text;
 
 import java.util.Random;
@@ -14,18 +17,37 @@ public class CombatAssistManager {
     private static final float SMOOTHNESS_FACTOR = 0.25f;
     private static final Random RANDOM = new Random();
     private static int clickHoldTicks = 0;
+    
+    // Local client-side tracking to bypass multiplayer desync
+    private static int localCooldownTicks = 0;
+    private static int maxCooldownTicks = 12; // Standard sword cooldown (~0.6 seconds / 12 ticks)
 
     public static void initialize() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            // Restore native user control over attack key if module is off or user is breaking blocks
             if (client == null || client.player == null || client.world == null) return;
 
             if (!ModuleManager.combatAlerts) {
+                localCooldownTicks = 0;
                 return;
             }
 
             if (client.options.attackKey.isPressed() && client.crosshairTarget != null && client.crosshairTarget.getType() == net.minecraft.util.hit.HitResult.Type.BLOCK) {
                 return;
+            }
+
+            // Dynamically calculate weapon recovery time based on held item
+            ItemStack heldItem = client.player.getMainHandStack();
+            if (heldItem.getItem() instanceof SwordItem) {
+                maxCooldownTicks = 12; // ~0.6s for swords
+            } else if (heldItem.getItem() instanceof AxeItem) {
+                maxCooldownTicks = 20; // ~1.0s for axes
+            } else {
+                maxCooldownTicks = 10; // Default fallback
+            }
+
+            // Decrement local cooldown counter every tick
+            if (localCooldownTicks > 0) {
+                localCooldownTicks--;
             }
 
             PlayerEntity closestTarget = null;
@@ -36,7 +58,7 @@ public class CombatAssistManager {
                 if (((PlayerEntity) entity).isSpectator() || ((PlayerEntity) entity).isCreative()) continue;
 
                 double dist = client.player.squaredDistanceTo(entity);
-                // Strict reach validation (default weapon reach range check: ~3.0 to 4.0 blocks squared = ~16.0)
+                // Strict 3-block survival reach squared = 9.0
                 if (dist <= 9.0 && dist < closestDistance) {
                     closestDistance = dist;
                     closestTarget = (PlayerEntity) entity;
@@ -44,7 +66,6 @@ public class CombatAssistManager {
             }
 
             if (closestTarget != null) {
-                // Smooth tracking view adjustment
                 double dx = closestTarget.getX() - client.player.getX();
                 double dy = (closestTarget.getY() + closestTarget.getEyeHeight(closestTarget.getPose())) - client.player.getEyeY();
                 double dz = closestTarget.getZ() - client.player.getZ();
@@ -62,9 +83,10 @@ public class CombatAssistManager {
                 client.player.setYaw(currentYaw + (yawDiff * SMOOTHNESS_FACTOR));
                 client.player.setPitch(currentPitch + (pitchDiff * SMOOTHNESS_FACTOR));
 
-                // STRICT VANILLA CHECK: getAttackCooldownProgress(0.0f) ensures vanilla cooldown bar is 100% full (1.0)
-                if (client.player.getAttackCooldownProgress(0.0f) >= 1.0f) {
+                // LOCAL COOLDOWN CHECK: Fully independent of server packet lag
+                if (localCooldownTicks <= 0) {
                     client.options.attackKey.setPressed(true);
+                    localCooldownTicks = maxCooldownTicks; // Reset timer locally
                     clickHoldTicks = 1 + RANDOM.nextInt(2);
                 } else if (clickHoldTicks > 0) {
                     clickHoldTicks--;
@@ -84,7 +106,7 @@ public class CombatAssistManager {
 
             int width = client.getWindow().getScaledWidth();
             int height = client.getWindow().getScaledHeight();
-            context.drawCenteredTextWithShadow(client.textRenderer, Text.literal("§aSTRICT COOLDOWN AIM-ASSIST ACTIVE"), width / 2, height - 70, 0x00FF00);
+            context.drawCenteredTextWithShadow(client.textRenderer, Text.literal("§aLOCAL SYNC COOLDOWN ACTIVE"), width / 2, height - 70, 0x00FF00);
         });
     }
 
