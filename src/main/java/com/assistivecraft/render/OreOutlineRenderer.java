@@ -12,7 +12,6 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 
 public class OreOutlineRenderer {
@@ -29,22 +28,22 @@ public class OreOutlineRenderer {
 
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
-            RenderSystem.disableDepthTest();
+            RenderSystem.disableDepthTest(); // Renders through walls (X-Ray ESP)
 
             VertexConsumer consumer = context.consumers().getBuffer(RenderLayer.getLines());
 
-            int radius = 12;
+            int radius = 24; // Increased scan range
             for (int x = -radius; x <= radius; x++) {
                 for (int y = -radius; y <= radius; y++) {
                     for (int z = -radius; z <= radius; z++) {
                         BlockPos pos = playerPos.add(x, y, z);
                         BlockState state = client.world.getBlockState(pos);
 
-                        if (state.isOf(Blocks.DIAMOND_ORE) || state.isOf(Blocks.DEEPSLATE_DIAMOND_ORE)) {
-                            if (isExposed(client, pos)) {
-                                Box box = new Box(pos).offset(-camPos.x, -camPos.y, -camPos.z);
-                                WorldRenderer.drawBox(context.matrixStack(), consumer, box, 0.0f, 1.0f, 1.0f, 1.0f);
-                            }
+                        if (state.isOf(Blocks.DIAMOND_ORE) || state.isOf(Blocks.DEEPSLATE_DIAMOND_ORE) ||
+                            state.isOf(Blocks.ANCIENT_DEBRIS) || state.isOf(Blocks.GOLD_ORE)) {
+                            
+                            Box box = new Box(pos).offset(-camPos.x, -camPos.y, -camPos.z);
+                            WorldRenderer.drawBox(context.matrixStack(), consumer, box, 0.0f, 1.0f, 1.0f, 1.0f);
                         }
                     }
                 }
@@ -53,14 +52,5 @@ public class OreOutlineRenderer {
             RenderSystem.enableDepthTest();
             RenderSystem.disableBlend();
         });
-    }
-
-    private static boolean isExposed(MinecraftClient client, BlockPos pos) {
-        for (Direction dir : Direction.values()) {
-            if (!client.world.getBlockState(pos.offset(dir)).isOpaqueFullCube(client.world, pos.offset(dir))) {
-                return true;
-            }
-        }
-        return false;
     }
 }
