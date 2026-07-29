@@ -2,65 +2,45 @@ package com.assistivecraft.render;
 
 import com.assistivecraft.ModuleManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 
 public class EntityOutlineRenderer {
+    public static void initialize() {
+        WorldRenderEvents.LAST.register(context -> {
+            if (!ModuleManager.entityIndicators) return;
 
-    private static final double RANGE = 48.0;
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client.player == null || client.world == null) return;
 
-    public static void onWorldRenderLast(WorldRenderContext context) {
-        ModuleManager mm = ModuleManager.INSTANCE;
-        if (!mm.entityOutlinesEnabled) return;
+            Camera camera = context.camera();
+            Vec3d camPos = camera.getPos();
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null || client.player == null) return;
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.disableDepthTest();
 
-        Vec3d cameraPos = context.camera().getPos();
-        MatrixStack matrices = context.matrixStack();
-        if (matrices == null) return;
+            VertexConsumer consumer = context.consumers().getBuffer(RenderLayer.getLines());
 
-        VertexConsumerProvider.Immediate immediate = client.getBufferBuilders().getEntityVertexConsumers();
+            for (Entity entity : client.world.getEntities()) {
+                if (entity == client.player || !(entity instanceof LivingEntity)) continue;
+                if (entity.squaredDistanceTo(client.player) > 1024) continue;
+                if (!client.player.canSee(entity)) continue;
 
-        RenderSystem.disableDepthTest();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
+                Box box = entity.getBoundingBox().offset(-camPos.x, -camPos.y, -camPos.z);
+                WorldRenderer.drawBox(context.matrixStack(), consumer, box, 1.0f, 0.5f, 0.0f, 1.0f);
+            }
 
-        Box searchBox = client.player.getBoundingBox().expand(RANGE);
-        for (LivingEntity entity : client.world.getEntitiesByClass(
-                LivingEntity.class, searchBox, e -> e != client.player && e.isAlive())) {
-
-            Box box = entity.getBoundingBox().offset(-cameraPos.x, -cameraPos.y, -cameraPos.z);
-
-            float[] color = colorFor(entity);
-            VertexConsumer buffer = immediate.getBuffer(RenderLayer.getLines());
-            drawBoxOutline(matrices, buffer, box, color[0], color[1], color[2], 1.0f);
-        }
-
-        immediate.draw();
-        RenderSystem.enableDepthTest();
-    }
-
-    private static float[] colorFor(LivingEntity entity) {
-        if (entity instanceof HostileEntity) {
-            return new float[]{1.0f, 0.15f, 0.15f};
-        }
-        return new float[]{0.1f, 0.9f, 1.0f};
-    }
-
-    private static void drawBoxOutline(MatrixStack matrices, VertexConsumer buffer, Box box,
-                                        float r, float g, float b, float a) {
-        WorldRenderer.drawBox(matrices, buffer,
-                box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ,
-                r, g, b, a);
+            RenderSystem.enableDepthTest();
+            RenderSystem.disableBlend();
+        });
     }
 }
