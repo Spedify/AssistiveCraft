@@ -37,7 +37,7 @@ public class CombatAssistManager {
 
                 double dist = client.player.squaredDistanceTo(entity);
                 // Strict reach validation (default weapon reach range check: ~3.0 to 4.0 blocks squared = ~16.0)
-                if (dist <= 16.0 && dist < closestDistance) {
+                if (dist <= 9.0 && dist < closestDistance) {
                     closestDistance = dist;
                     closestTarget = (PlayerEntity) entity;
                 }
